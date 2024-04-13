@@ -13,6 +13,7 @@ def scrape_mobile_data(url, name_class, price_class):
     phones = []
     prices = []
     links = []  # to store links
+    images = [] # to store image URLs
     
     # Scraping phone names, prices, and links
     phone_blocks = soup.find_all('a', class_='_1fQZEK')
@@ -20,8 +21,9 @@ def scrape_mobile_data(url, name_class, price_class):
         phones.append(block.find('div', class_=name_class).text.strip())
         prices.append(block.find('div', class_=price_class).text.strip())
         links.append("https://www.flipkart.com" + block['href'])  # Constructing absolute links
+        images.append(block.find('img', class_='_396cs4')['src']) # Fetching image URLs
     
-    return phones, prices, links
+    return phones, prices, links, images
 
 # Function to append data to CSV file
 def append_to_csv(file_name, data, headers):
@@ -65,22 +67,22 @@ def get_max_smartphones(url, name_class, price_class):
     total_phones = 0
     page_num = 1
     all_data = []  # List to hold all data
-    headers = ["Phone", "Price", "Mobile Link", "Brand", "Color", "Storage"]  # Header for CSV
+    headers = ["Phone", "Price", "Mobile Link", "Brand", "Color", "Storage", "Image URL"]  # Header for CSV
     while True:
         page_url = f"{url}&page={page_num}"
-        phones, prices, links = scrape_mobile_data(page_url, name_class, price_class)
+        phones, prices, links, images = scrape_mobile_data(page_url, name_class, price_class)
         if not phones:
             break
         brands = fetch_brand_names(phones)
         colors, storage = fetch_colors_and_storage_from_phones("mobile_data.csv")
-        for phone, price, link, brand, color, storage_info in zip(phones, prices, links, brands, colors, storage):
-            all_data.append([phone, price, link, brand, color, storage_info])  # Append data to list
-            print(f"Phone: {phone}, Price: {price}, Link: {link}, Brand: {brand}, Color: {color}, Storage: {storage_info}")  # Print for verification
+        for phone, price, link, brand, color, storage_info, image_url in zip(phones, prices, links, brands, colors, storage, images):
+            all_data.append([phone, price, link, brand, color, storage_info, image_url])  # Append data to list
+            print(f"Phone: {phone}, Price: {price}, Link: {link}, Brand: {brand}, Color: {color}, Storage: {storage_info}, Image URL: {image_url}")  # Print for verification
         total_phones += len(phones)
         page_num += 1
     
     # Append data to CSV
-    append_to_csv("mobile_data4.csv", all_data, headers)
+    append_to_csv("mobile_data5.csv", all_data, headers)
     return total_phones
 
 # Scrape Flipkart mobile data
