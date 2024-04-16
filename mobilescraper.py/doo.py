@@ -1,9 +1,9 @@
-import requests
 from bs4 import BeautifulSoup
 import csv
+import requests
 
 # Function to scrape mobile phone data from a website
-def scrape_mobile_data(url, name_class, price_class):
+def scrape_mobile_data(url, name_class, price_class, rating_class):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
     }
@@ -13,17 +13,21 @@ def scrape_mobile_data(url, name_class, price_class):
     phones = []
     prices = []
     links = []  # to store links
-    images = [] # to store image URLs
+    ratings = []  # to store ratings
     
-    # Scraping phone names, prices, and links
+    # Scraping phone names, prices, links, and ratings
     phone_blocks = soup.find_all('a', class_='_1fQZEK')
     for block in phone_blocks:
         phones.append(block.find('div', class_=name_class).text.strip())
         prices.append(block.find('div', class_=price_class).text.strip())
         links.append("https://www.flipkart.com" + block['href'])  # Constructing absolute links
-        images.append(block.find('img', class_='_396cs4')['src']) # Fetching image URLs
+        rating = block.find('div', class_=rating_class)
+        if rating:
+            ratings.append(rating.text.strip())
+        else:
+            ratings.append('Not available')
     
-    return phones, prices, links, images
+    return phones, prices, links, ratings
 
 # Function to append data to CSV file
 def append_to_csv(file_name, data, headers):
@@ -62,33 +66,49 @@ def fetch_colors_and_storage_from_phones(file_name):
                 storage.append('Not available')
     return colors, storage
 
+# Function to fetch ratings from phone data
+def fetch_ratings(phones, url, rating_class):
+    ratings = []
+    for phone in phones:
+        response = requests.get(url + phone.replace(" ", "-"), headers=headers)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        rating_block = soup.find('div', class_=rating_class)
+        if rating_block:
+            rating = rating_block.text.strip()
+            ratings.append(rating)
+        else:
+            ratings.append('Not available')
+    return ratings
+
 # Function to get the maximum number of smartphones on Flipkart
-def get_max_smartphones(url, name_class, price_class):
+def get_max_smartphones(url, name_class, price_class, rating_class):
     total_phones = 0
     page_num = 1
     all_data = []  # List to hold all data
-    headers = ["Phone", "Price", "Mobile Link", "Brand", "Color", "Storage", "Image URL"]  # Header for CSV
+    headers = ["Phone", "Price", "Mobile Link", "Brand", "Color", "Storage", "Rating"]  # Header for CSV
     while True:
         page_url = f"{url}&page={page_num}"
-        phones, prices, links, images = scrape_mobile_data(page_url, name_class, price_class)
+        phones, prices, links = scrape_mobile_data(page_url, name_class, price_class, rating_class)
         if not phones:
             break
         brands = fetch_brand_names(phones)
         colors, storage = fetch_colors_and_storage_from_phones("mobile_data.csv")
-        for phone, price, link, brand, color, storage_info, image_url in zip(phones, prices, links, brands, colors, storage, images):
-            all_data.append([phone, price, link, brand, color, storage_info, image_url])  # Append data to list
-            print(f"Phone: {phone}, Price: {price}, Link: {link}, Brand: {brand}, Color: {color}, Storage: {storage_info}, Image URL: {image_url}")  # Print for verification
+        ratings = fetch_ratings(phones, url, rating_class)
+        for phone, price, link, brand, color, storage_info, rating in zip(phones, prices, links, brands, colors, storage, ratings):
+            all_data.append([phone, price, link, brand, color, storage_info, rating])  # Append data to list
+            print(f"Phone: {phone}, Price: {price}, Link: {link}, Brand: {brand}, Color: {color}, Storage: {storage_info}, Rating: {rating}")  # Print for verification
         total_phones += len(phones)
         page_num += 1
     
     # Append data to CSV
-    append_to_csv("mobile_data9.csv", all_data, headers)
+    append_to_csv("mobile_datu.csv", all_data, headers)
     return total_phones
 
 # Scrape Flipkart mobile data
 flipkart_url = 'https://www.flipkart.com/mobiles/pr?sid=tyy,4io&otracker=categorytree'
 flipkart_name_class = '_4rR01T'
 flipkart_price_class = '_30jeq3 _1_WHN1'
-max_flipkart_phones = get_max_smartphones(flipkart_url, flipkart_name_class, flipkart_price_class)
+flipkart_rating_class = '._1lRcqv'
+max_flipkart_phones = get_max_smartphones(flipkart_url, flipkart_name_class, flipkart_price_class, flipkart_rating_class)
 
 print("Maximum smartphones on Flipkart:", max_flipkart_phones)
