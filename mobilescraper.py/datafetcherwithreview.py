@@ -62,7 +62,7 @@ def get_highest_rated_smartphone_with_reviews(url, name_class, price_class, rati
     all_data.sort(key=lambda x: float(x[3]) if x[3] != 'Not available' else 0, reverse=True)
     
     # Append data to CSV
-    append_to_csv("mobile_data_with_reviews_and_ratings.csv", all_data, headers)
+    append_to_csv("mobile_data_with_reviews_and_ratinl.csv", all_data, headers)
     
     # Return the highest rated smartphone
     if all_data:

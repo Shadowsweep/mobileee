@@ -101,7 +101,7 @@ def get_max_smartphones(url, name_class, price_class, rating_class):
         page_num += 1
     
     # Append data to CSV
-    append_to_csv("mobile_datu.csv", all_data, headers)
+    append_to_csv("mobile_datp.csv", all_data, headers)
     return total_phones
 
 # Scrape Flipkart mobile data
